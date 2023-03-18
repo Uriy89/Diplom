@@ -1,0 +1,96 @@
+package ru.netology.diplom.config;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import ru.netology.diplom.security.JWTFilter;
+import ru.netology.diplom.security.JwtAuthenticationEntryPoint;
+
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true, jsr250Enabled = true)
+public class WebConfig {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+   // private final UserDetailsService jwtUserDetailsService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JWTFilter jwtRequestFilter;
+
+    public WebConfig(UserDetailsService jwtUserDetailsService, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, JWTFilter jwtRequestFilter) {
+       // this.jwtUserDetailsService = jwtUserDetailsService;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.jwtRequestFilter = jwtRequestFilter;
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails userDetails = User.builder()
+                .passwordEncoder(passwordEncoder::encode)
+                .username("user")
+                .password("password")
+                .roles("USER")
+                .build();
+        return new InMemoryUserDetailsManager(userDetails);
+    }
+
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(List.of("*"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.cors();
+        httpSecurity.csrf().disable();
+        httpSecurity.headers().frameOptions().disable();
+
+        httpSecurity
+                .authorizeHttpRequests((request) -> request
+                        .requestMatchers("/login").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin((form) -> form
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .logout((logout) -> logout.permitAll());
+
+        //httpSecurity
+        //        .exceptionHandling()
+        //        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        //        .and()
+        //        .sessionManagement()
+        //        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        return httpSecurity.build();
+    }
+}
