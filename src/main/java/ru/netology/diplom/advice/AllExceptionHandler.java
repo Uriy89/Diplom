@@ -13,4 +13,6 @@ public class AllExceptionHandler {
         violation.setMessage(validationException.getMessage());
         return new ResponseEntity<>(violation, HttpStatus.BAD_REQUEST);
     }
+
+
 }

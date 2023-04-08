@@ -1,11 +1,11 @@
 create schema if not exists diplom;
 
 insert into users(login, password)
-values ('muratova@yandex.ru', '1213');
+values ('aver@mail.ru', '1213');
 insert into users(login, password)
-values ('ignatova@yandex.ru', '100500');
+values ('linnikov@yandex.ru', '100500');
 insert into users(login, password)
-values ('sama@yandex.ru', '$10000');
+values ('todo@yandex.ru', '$10000');
 
 insert into user_entity_roles(user_entity_id, roles)
 values (1, 'ROLE_ADMIN');

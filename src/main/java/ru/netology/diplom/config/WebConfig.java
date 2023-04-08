@@ -4,11 +4,9 @@ package ru.netology.diplom.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,16 +27,13 @@ import java.util.List;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true, jsr250Enabled = true)
 public class WebConfig {
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-   // private final UserDetailsService jwtUserDetailsService;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JWTFilter jwtRequestFilter;
 
-    public WebConfig(UserDetailsService jwtUserDetailsService, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, JWTFilter jwtRequestFilter) {
-       // this.jwtUserDetailsService = jwtUserDetailsService;
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+    public WebConfig(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, JWTFilter jwtRequestFilter) {
+        //this.jwtUserDetailsService = jwtUserDetailsService;
+        // private final UserDetailsService jwtUserDetailsService;
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
@@ -55,6 +50,11 @@ public class WebConfig {
 
 
     @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
@@ -65,7 +65,6 @@ public class WebConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -84,13 +83,7 @@ public class WebConfig {
                         .permitAll()
                 )
                 .logout((logout) -> logout.permitAll());
-
-        //httpSecurity
-        //        .exceptionHandling()
-        //        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-        //        .and()
-        //        .sessionManagement()
-        //        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         return httpSecurity.build();
+
     }
 }
